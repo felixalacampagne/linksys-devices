@@ -1,12 +1,16 @@
 // Configuration
-const ROUTER_IP = '192.168.0.1';     // TODO read this from an external source not commited to repo
-const USERNAME = '';                 // Could be 'admin', must be blank for my router. TODO read this from an external source not commited to repo
-const PASSWORD = '<your password>';  // TODO read this from an external source not commited to repo
+// Temporary solution to avoid hard coding sensitive info in the source file: read env.vars.
+// from a local file
+process.loadEnvFile("./linksysdevlst.env");
+const ROUTER_IP = process.env.ROUTERIP.trim();
+const USERNAME = process.env.ROUTERUSER.trim();
+const PASSWORD = process.env.ROUTERPWD.trim();
 
 const JNAP_URL = `http://${ROUTER_IP}/JNAP/`;
 const JNAP_ACTION_PREFIX = 'http://linksys.com/jnap/';
 // Helper to send JNAP POST requests
 async function sendJnapRequest(action, payload = {}, authToken = '') {
+
   const response = await fetch(JNAP_URL, {
     method: 'POST',
     headers: {
@@ -64,7 +68,7 @@ async function getConnectedDevices() {
     //const authToken = loginResult.output.authToken;
 
     const authToken = 'Basic ' + Buffer.from(USERNAME + ":" + PASSWORD).toString('base64');
-    console.log("Auth Token: " + authToken);
+    // console.log(USERNAME + ":" + PASSWORD + "... Auth Token: " + authToken);
     
     // Step 2: Fetch connected devices
     console.log('Fetching connected devices...');
@@ -72,7 +76,7 @@ async function getConnectedDevices() {
     // console.log(devicesResult);
     const devices = devicesResult.output?.devices || [];
     // console.log('Devices...');
-    console.log(devices);
+    // console.log(devices);
     
     // Step 3: Fetch DHCP reservations
     console.log('Fetching DHCP reservations...');
@@ -92,9 +96,9 @@ async function getConnectedDevices() {
     const formattedDevices = devices.map(device => {
       // Find the first available IPv4 connections
       const ipv4Connection = device.connections?.find(conn => conn.ipAddress && !conn.ipAddress.includes(':'));
-      const ipAddress = ipv4Connection ? ipv4Connection.ipAddress : 'N/A';
+      const ipAddress = ipv4Connection ? ipv4Connection.ipAddress : 'Offline';
       const macAddress = device.knownMACAddresses ? device.knownMACAddresses[0].toUpperCase() : 'N/A';
-      //console.log("MAC: " + device.knownMACAddresses + ", " + macAddress);
+      // console.log("MAC: " + device.knownMACAddresses + ", " + macAddress);
       // Extract the correct name handling the widget property anomaly
       const finalName = extractCustomName(device);
       
@@ -104,7 +108,7 @@ async function getConnectedDevices() {
       return {
         'Device Name': finalName,
         'IP Address': ipAddress,
-        'MAC Address': device.macAddress || 'N/A',
+        'MAC Address': macAddress || 'N/A',
         'DHCP Reservation': hasReservation ? 'Yes' : 'No'
       };
     });
