@@ -50,10 +50,12 @@ If requests fail, confirm that your router firmware is configured to allow brows
 
 ## Local Dev-Server Proxy
 
-The Angular dev server now includes a proxy configuration at `proxy.conf.json`.
-When the app is served with `ng serve`, requests to `/JNAP/` are forwarded to the local router target configured in that file.
+The Angular dev server now includes a proxy configuration at `proxy.conf.js`.
+When the app is served with `ng serve`, requests to `/JNAP/` are forwarded to the router target configured in that file.
 
-If your router is not at `http://192.168.1.1`, update the `target` value in `proxy.conf.json` to match your local router IP.
+When proxy mode is enabled in the app, you can optionally enter a router IP override. If a router IP is entered, the proxy will route the request to that address instead of the default target.
+
+If your default router is not at `http://192.168.1.1`, update the `target` value in `proxy.conf.js` to match your local router IP.
 
 ## Running unit tests
 
