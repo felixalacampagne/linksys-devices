@@ -48,14 +48,24 @@ The router must support CORS for this to work. The required response headers are
 
 If requests fail, confirm that your router firmware is configured to allow browser-originated JNAP requests and that the target IP is reachable from the browser.
 
+Since there is no control over what the router supports it is highly unlikely that the
+required CORS settings will be present. I am currently unaware of any browser client based workaround for this. The only solution appears to be to have some sort of 'backend' to
+make the request which does not have the ludricous restrictions that apply to the browser.
+
 ## Local Dev-Server Proxy
 
 The Angular dev server now includes a proxy configuration at `proxy.conf.js`.
 When the app is served with `ng serve`, requests to `/JNAP/` are forwarded to the router target configured in that file.
 
-When proxy mode is enabled in the app, you can optionally enter a router IP override. If a router IP is entered, the proxy will route the request to that address instead of the default target.
+The proxy target can be configured from an environment variable in `.env`:
 
-If your default router is not at `http://192.168.1.1`, update the `target` value in `proxy.conf.js` to match your local router IP.
+```dotenv
+PROXY_TARGET=192.168.18.1
+```
+
+The value is read by `proxy.conf.js` at startup, so you can change the router target without editing the proxy config itself.
+
+The PROXY_TARGET variable can also be set via the normal environment variable command before starting 'ng serve'.
 
 ## Running unit tests
 
