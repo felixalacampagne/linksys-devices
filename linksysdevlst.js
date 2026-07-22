@@ -54,6 +54,36 @@ function extractCustomName(device) {
   return device.modelNumber || device.manufacturer || 'Unknown Device';
 }
 
+/**
+ * Sorts an array of objects numerically by an IPv4 address field.
+ * @param {Array<Object>} array - The array of objects to sort.
+ * @param {boolean} [ascending=true] - Sort direction.
+ * @returns {Array<Object>} A new sorted array.
+ */
+function sortObjectsByIP(array, ascending = true) {
+  // Helper function to convert an IPv4 string to a 32-bit integer
+  const ipToLong = (ip) => {
+    return ip.split('.').reduce((accumulator, octet) => {
+      return (accumulator << 8) >>> 0; 
+    }, 0) + ip.split('.').reduce((acc, oct, i) => acc + parseInt(oct, 10) * Math.pow(256, 3 - i), 0);
+  };
+
+  // Cleaner approach for the IP to number conversion
+  const ipToNum = (ipString) => {
+    const parts = ipString.split('.').map(Number);
+    return (parts[0] << 24) | (parts[1] << 16) | (parts[2] << 8) | parts[3];
+  };
+
+  // Create a shallow copy to avoid mutating the original array
+  return [...array].sort((itemA, itemB) => {
+    const ipA = ipToNum(itemA['IP Address']);
+    const ipB = ipToNum(itemB['IP Address']);
+    
+    return ascending ? ipA - ipB : ipB - ipA;
+  });
+}
+
+
 async function getConnectedDevices() {
   try {
    
@@ -113,8 +143,10 @@ async function getConnectedDevices() {
       };
     });
 
+   
     // Display the results in a clean table format
-    console.table(formattedDevices);
+    //console.table(formattedDevices);
+    console.table(sortObjectsByIP(formattedDevices, true));
 
   } catch (error) {
     console.error('Error executing JNAP script:', error.message);
