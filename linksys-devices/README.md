@@ -60,12 +60,23 @@ When the app is served with `ng serve`, requests to `/JNAP/` are forwarded to th
 The proxy target can be configured from an environment variable in `.env`:
 
 ```dotenv
-PROXY_TARGET=192.168.18.1
+PROXY_TARGET=192.168.0.1
 ```
 
 The value is read by `proxy.conf.js` at startup, so you can change the router target without editing the proxy config itself.
 
 The PROXY_TARGET variable can also be set via the normal environment variable command before starting 'ng serve'.
+
+## Production Apache reverse proxy
+
+A production Apache virtual host can serve the Angular application from the `/linksys` path prefix and reverse-proxy only the JNAP API to the router.
+
+The example configuration is available in `apache-linksys-vhost.conf` and is tuned to the new path-aware behavior:
+
+- the app is hosted at `http://hostname/linksys/`
+- static files are served from the built Angular output under `/linksys/`
+- `/linksys/JNAP/` is passed through to the router as `http://<router-ip>/JNAP/`
+- `/linksys` is redirected to `/linksys/` so the Angular base path resolves correctly
 
 ## Running unit tests
 

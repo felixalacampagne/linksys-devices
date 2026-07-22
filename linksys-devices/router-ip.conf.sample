@@ -1,0 +1,8 @@
+# Optional Apache override file placed directly in the web app root.
+# Copy this file to /var/www/linksys-devices/router-ip.conf and update the router IP below.
+#
+# Example:
+# ProxyPass "/linksys/JNAP/" "http://192.168.0.1/JNAP/"
+# ProxyPassReverse "/linksys/JNAP/" "http://192.168.0.1/JNAP/"
+# ProxyPass "/linksys/JNAP" "http://192.168.0.1/JNAP/"
+# ProxyPassReverse "/linksys/JNAP" "http://192.168.0.1/JNAP/"

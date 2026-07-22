@@ -56,7 +56,9 @@ export class DeviceService {
   }
 
   private buildProxyUrl(): string {
-    return '/JNAP/';
+    const basePath = new URL(document.baseURI).pathname.replace(/\/+$/, '');
+    const normalizedBasePath = basePath && basePath !== '/' ? basePath : '';
+    return `${normalizedBasePath}/JNAP/`;
   }
 
   private buildAuthToken(username: string, password: string): string {
