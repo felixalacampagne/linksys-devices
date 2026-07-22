@@ -1,17 +1,17 @@
 // Configuration
-const ROUTER_IP = '192.168.1.1'; // Change if your router uses a different IP
-const USERNAME = 'admin';        // Typically 'admin'
-const PASSWORD = 'YourRouterPasswordHere'; 
+const ROUTER_IP = '192.168.0.1';     // TODO read this from an external source not commited to repo
+const USERNAME = '';                 // Could be 'admin', must be blank for my router. TODO read this from an external source not commited to repo
+const PASSWORD = '<your password>';  // TODO read this from an external source not commited to repo
 
 const JNAP_URL = `http://${ROUTER_IP}/JNAP/`;
-
+const JNAP_ACTION_PREFIX = 'http://linksys.com/jnap/';
 // Helper to send JNAP POST requests
 async function sendJnapRequest(action, payload = {}, authToken = '') {
   const response = await fetch(JNAP_URL, {
     method: 'POST',
     headers: {
       'Content-Type': 'application/json',
-      'X-JNAP-Action': `http://linksys.com{action}`,
+      'X-JNAP-Action': JNAP_ACTION_PREFIX + action,
       'X-JNAP-Authorization': authToken
     },
     body: JSON.stringify(payload)
@@ -34,7 +34,7 @@ function extractCustomName(device) {
   if (Array.isArray(device.properties)) {
     // Check for explicit "name", "customName", or "userGivenName" keys
     const customNameProp = device.properties.find(p => 
-      ['name', 'customname', 'usergivenname', 'description'].includes(p.name?.toLowerCase())
+      ['name', 'customname', 'usergivenname', 'userdevicename'].includes(p.name?.toLowerCase())
     );
     if (customNameProp && customNameProp.value?.trim()) {
       return customNameProp.value.trim();
@@ -52,28 +52,39 @@ function extractCustomName(device) {
 
 async function getConnectedDevices() {
   try {
-    // Step 1: Authenticate with the router
-    console.log('Authenticating with router...');
-    const loginResult = await sendJnapRequest('core/Login', { username: USERNAME, password: PASSWORD });
-    
-    if (loginResult.output?.result !== 'OK') {
-      throw new Error('Authentication failed. Check your password.');
-    }
-    
-    const authToken = loginResult.output.authToken;
+   
+    // This is not required - the token should just be the Basic auth credentials each time 
+    //// Step 1: Authenticate with the router
+    //console.log('Authenticating with router...');
+    //const loginResult = await sendJnapRequest('core/Login', { username: USERNAME, password: PASSWORD });
+    //
+    //if (loginResult.output?.result !== 'OK') {
+    //  throw new Error('Authentication failed. Check your password.');
+    //}
+    //const authToken = loginResult.output.authToken;
 
+    const authToken = 'Basic ' + Buffer.from(USERNAME + ":" + PASSWORD).toString('base64');
+    console.log("Auth Token: " + authToken);
+    
     // Step 2: Fetch connected devices
     console.log('Fetching connected devices...');
     const devicesResult = await sendJnapRequest('devicelist/GetDevices', {}, authToken);
+    // console.log(devicesResult);
     const devices = devicesResult.output?.devices || [];
-
+    // console.log('Devices...');
+    console.log(devices);
+    
     // Step 3: Fetch DHCP reservations
     console.log('Fetching DHCP reservations...');
-    const dhcpResult = await sendJnapRequest('router/GetDHCPReservations', {}, authToken);
-    const reservations = dhcpResult.output?.reservations || [];
-
+    const dhcpResult = await sendJnapRequest('router/GetLANSettings', {}, authToken);
+    //console.log(dhcpResult);
+    
+    const reservations = dhcpResult.output?.dhcpSettings.reservations || [];
+    //console.log('DHCP reservations...');
+    //console.log(reservations);
+    
     // Create a Set of reserved MAC addresses for fast lookup
-    const reservedMacs = new Set(reservations.map(res => res.macAddress?.toLowerCase()));
+    const reservedMacs = new Set(reservations.map(res => res.macAddress?.toUpperCase()));
 
     // Step 4: Combine and format the data
     console.log('\n--- Connected Devices Report ---');
@@ -82,8 +93,8 @@ async function getConnectedDevices() {
       // Find the first available IPv4 connections
       const ipv4Connection = device.connections?.find(conn => conn.ipAddress && !conn.ipAddress.includes(':'));
       const ipAddress = ipv4Connection ? ipv4Connection.ipAddress : 'N/A';
-      const macAddress = device.macAddress ? device.macAddress.toLowerCase() : 'N/A';
-      
+      const macAddress = device.knownMACAddresses ? device.knownMACAddresses[0].toUpperCase() : 'N/A';
+      //console.log("MAC: " + device.knownMACAddresses + ", " + macAddress);
       // Extract the correct name handling the widget property anomaly
       const finalName = extractCustomName(device);
       
