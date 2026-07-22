@@ -1,0 +1,104 @@
+<main class="page-shell">
+  <mat-card>
+    <mat-toolbar color="primary">Linksys Router Device List</mat-toolbar>
+
+    <div class="form-row">
+      <mat-slide-toggle
+        [ngModel]="useProxy()"
+        (ngModelChange)="useProxy.set($event)"
+        class="proxy-toggle"
+        >Use local dev-server proxy</mat-slide-toggle
+      >
+
+      <mat-form-field appearance="outline" class="router-ip-field">
+        <mat-label>Router IP</mat-label>
+        <input
+          matInput
+          placeholder="192.168.1.1"
+          [(ngModel)]="routerIp"
+          [disabled]="useProxy()"
+          autocomplete="off"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Username</mat-label>
+        <input
+          matInput
+          placeholder="admin"
+          [(ngModel)]="username"
+          autocomplete="username"
+        />
+      </mat-form-field>
+
+      <mat-form-field appearance="outline">
+        <mat-label>Password</mat-label>
+        <input
+          matInput
+          type="password"
+          placeholder="Password"
+          [(ngModel)]="password"
+          autocomplete="current-password"
+        />
+      </mat-form-field>
+
+      <button
+        mat-flat-button
+        color="primary"
+        class="fetch-button"
+        (click)="loadDevices()"
+        [disabled]="
+          loading() || !username.trim() || !password.trim() || (!useProxy() && !routerIp.trim())
+        "
+      >
+        Fetch Devices
+      </button>
+    </div>
+
+    <p class="hint">
+      When proxy mode is enabled, the app sends requests through the Angular dev server proxy and does not require a router IP locally.
+      When proxy mode is disabled, the router must allow browser CORS requests to `http://&lt;router-ip&gt;/JNAP/`.
+      Required response headers include `Access-Control-Allow-Origin`,
+      `Access-Control-Allow-Methods`, and `Access-Control-Allow-Headers`.
+    </p>
+
+    <div class="status-row" *ngIf="loading()">
+      <mat-progress-spinner mode="indeterminate" diameter="32"></mat-progress-spinner>
+      <span>Loading devices…</span>
+    </div>
+
+    <p class="error" *ngIf="error()">{{ error() }}</p>
+
+    <div class="table-container" *ngIf="devices().length > 0">
+      <table mat-table [dataSource]="devices()" class="mat-elevation-z4">
+
+        <ng-container matColumnDef="deviceName">
+          <th mat-header-cell *matHeaderCellDef>Device Name</th>
+          <td mat-cell *matCellDef="let device">{{ device.deviceName }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="ipAddress">
+          <th mat-header-cell *matHeaderCellDef>IP Address</th>
+          <td mat-cell *matCellDef="let device">{{ device.ipAddress }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="macAddress">
+          <th mat-header-cell *matHeaderCellDef>MAC Address</th>
+          <td mat-cell *matCellDef="let device">{{ device.macAddress }}</td>
+        </ng-container>
+
+        <ng-container matColumnDef="dhcpReservation">
+          <th mat-header-cell *matHeaderCellDef>DHCP Reservation</th>
+          <td mat-cell *matCellDef="let device">{{ device.dhcpReservation }}</td>
+        </ng-container>
+
+        <tr mat-header-row *matHeaderRowDef="displayedColumns"></tr>
+        <tr mat-row *matRowDef="let row; columns: displayedColumns"></tr>
+      </table>
+    </div>
+
+    <p class="empty-state" *ngIf="!loading() && !error() && devices().length === 0">
+      No devices have been loaded yet. Enter router credentials and click Fetch Devices.
+    </p>
+  </mat-card>
+</main>

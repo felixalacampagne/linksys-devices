@@ -36,6 +36,25 @@ ng build
 
 This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
 
+## Linksys JNAP Router Access
+
+This app queries a Linksys router directly from the browser using the `http://<router-ip>/JNAP/` endpoint.
+
+The router must support CORS for this to work. The required response headers are:
+
+- `Access-Control-Allow-Origin: *`
+- `Access-Control-Allow-Methods: POST, OPTIONS`
+- `Access-Control-Allow-Headers: Content-Type, X-JNAP-Action, X-JNAP-Authorization`
+
+If requests fail, confirm that your router firmware is configured to allow browser-originated JNAP requests and that the target IP is reachable from the browser.
+
+## Local Dev-Server Proxy
+
+The Angular dev server now includes a proxy configuration at `proxy.conf.json`.
+When the app is served with `ng serve`, requests to `/JNAP/` are forwarded to the local router target configured in that file.
+
+If your router is not at `http://192.168.1.1`, update the `target` value in `proxy.conf.json` to match your local router IP.
+
 ## Running unit tests
 
 To execute unit tests with the [Vitest](https://vitest.dev/) test runner, use the following command:

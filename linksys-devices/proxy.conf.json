@@ -1,0 +1,8 @@
+{
+  "/JNAP": {
+    "target": "http://192.168.18.1",
+    "secure": false,
+    "changeOrigin": true,
+    "logLevel": "info"
+  }
+}
