@@ -43,18 +43,6 @@ interface DevicesOutput {
 export class DeviceService {
   constructor(private http: HttpClient) {}
 
-  /**
-   * Build the JNAP URL from the router IP and normalize the value.
-   */
-  private buildRouterUrl(routerIp: string): string {
-    const sanitized = routerIp
-      .trim()
-      .replace(/^https?:\/\//, '')
-      .replace(/\/+$/, '');
-
-    return `http://${sanitized}/JNAP/`;
-  }
-
   private buildProxyUrl(): string {
     const basePath = new URL(document.baseURI).pathname.replace(/\/+$/, '');
     const normalizedBasePath = basePath && basePath !== '/' ? basePath : '';
@@ -65,18 +53,12 @@ export class DeviceService {
     return 'Basic ' + btoa(`${username.trim()}:${password}`);
   }
 
-  private createHeaders(action: string, authToken: string, routerIpOverride?: string): HttpHeaders {
-    let headers = new HttpHeaders({
+  private createHeaders(action: string, authToken: string): HttpHeaders {
+    return new HttpHeaders({
       'Content-Type': 'application/json',
       'X-JNAP-Action': `http://linksys.com/jnap/${action}`,
       'X-JNAP-Authorization': authToken
     });
-
-    if (routerIpOverride?.trim()) {
-      headers = headers.set('X-Router-Ip', routerIpOverride.trim());
-    }
-
-    return headers;
   }
 
   private buildHttpError(error: unknown, action: string): Error {
@@ -140,27 +122,22 @@ export class DeviceService {
   }
 
   async fetchConnectedDevices(
-    routerIp: string,
     username: string,
-    password: string,
-    useProxy: boolean
+    password: string
   ): Promise<DeviceRow[]> {
-    const url = useProxy ? this.buildProxyUrl() : this.buildRouterUrl(routerIp);
+    const url = this.buildProxyUrl();
     const authToken = this.buildAuthToken(username, password);
-    const routerIpOverride = undefined;
 
     const devicesResponse = await this.sendJnapRequest<DevicesOutput>(
       url,
       'devicelist/GetDevices',
-      authToken,
-      routerIpOverride
+      authToken
     );
 
     const lanSettingsResponse = await this.sendJnapRequest<LanSettingsOutput>(
       url,
       'router/GetLANSettings',
-      authToken,
-      routerIpOverride
+      authToken
     );
 
     const devices = devicesResponse.output?.devices ?? [];
@@ -192,13 +169,12 @@ export class DeviceService {
   private async sendJnapRequest<T>(
     url: string,
     action: string,
-    authToken: string,
-    routerIpOverride?: string
+    authToken: string
   ): Promise<JnapResponse<T>> {
     try {
       return await firstValueFrom(
         this.http.post<JnapResponse<T>>(url, {}, {
-          headers: this.createHeaders(action, authToken, routerIpOverride)
+          headers: this.createHeaders(action, authToken)
         })
       );
     } catch (error: unknown) {

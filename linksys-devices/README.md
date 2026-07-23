@@ -38,23 +38,16 @@ This will compile your project and store the build artifacts in the `dist/` dire
 
 ## Linksys JNAP Router Access
 
-This app queries a Linksys router directly from the browser using the `http://<router-ip>/JNAP/` endpoint.
+This app uses a proxy-only request model for Linksys JNAP access. The browser never calls the router directly.
+This is because the browser blocks the calls to the router due to the absence of CORS headers in the response
+from the router. There is nothing that can be done about this without modifying the server code which is
+obviously not possible and completely absurd - such is the nature of continuous improvement.
 
-The router must support CORS for this to work. The required response headers are:
-
-- `Access-Control-Allow-Origin: *`
-- `Access-Control-Allow-Methods: POST, OPTIONS`
-- `Access-Control-Allow-Headers: Content-Type, X-JNAP-Action, X-JNAP-Authorization`
-
-If requests fail, confirm that your router firmware is configured to allow browser-originated JNAP requests and that the target IP is reachable from the browser.
-
-Since there is no control over what the router supports it is highly unlikely that the
-required CORS settings will be present. I am currently unaware of any browser client based workaround for this. The only solution appears to be to have some sort of 'backend' to
-make the request which does not have the ludricous restrictions that apply to the browser.
+All JNAP requests are routed through the configured application proxy path, and the router IP is defined by the server-side proxy configuration.
 
 ## Local Dev-Server Proxy
 
-The Angular dev server now includes a proxy configuration at `proxy.conf.js`.
+The Angular dev server includes a proxy configuration at `proxy.conf.js`.
 When the app is served with `ng serve`, requests to `/JNAP/` are forwarded to the router target configured in that file.
 
 The proxy target can be configured from an environment variable in `.env`:
@@ -65,17 +58,17 @@ PROXY_TARGET=192.168.0.1
 
 The value is read by `proxy.conf.js` at startup, so you can change the router target without editing the proxy config itself.
 
-The PROXY_TARGET variable can also be set via the normal environment variable command before starting 'ng serve'.
+The PROXY_TARGET variable can also be set via the normal environment variable command before starting `ng serve`.
 
 ## Production Apache reverse proxy
 
-A production Apache virtual host can serve the Angular application from the `/linksys` path prefix and reverse-proxy only the JNAP API to the router.
+A production Apache virtual host can serve the Angular application from the `/linksys` path prefix and reverse-proxy the JNAP API to the router.
 
 The example configuration is available in `apache-linksys-vhost.conf` and is tuned to the new path-aware behavior:
 
 - the app is hosted at `http://hostname/linksys/`
 - static files are served from the built Angular output under `/linksys/`
-- `/linksys/JNAP/` is passed through to the router as `http://<router-ip>/JNAP/`
+- `/linksys/JNAP/` is passed through to the router through the configured server-side proxy rule
 - `/linksys` is redirected to `/linksys/` so the Angular base path resolves correctly
 
 ## Running unit tests

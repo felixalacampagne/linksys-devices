@@ -8,7 +8,6 @@ import { MatInputModule } from '@angular/material/input';
 import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
-import { MatSlideToggleModule } from '@angular/material/slide-toggle';
 
 import { DeviceService, DeviceRow } from './device.service';
 
@@ -24,17 +23,14 @@ import { DeviceService, DeviceRow } from './device.service';
     MatButtonModule,
     MatTableModule,
     MatToolbarModule,
-    MatProgressSpinnerModule,
-    MatSlideToggleModule
+    MatProgressSpinnerModule
   ],
   templateUrl: './device-table.component.html',
   styleUrls: ['./device-table.component.scss']
 })
 export class DeviceTableComponent {
-  routerIp = '';
   username = '';
   password = '';
-  useProxy = signal(true);
   loading = signal(false);
   error = signal<string | undefined>(undefined);
   devices = signal<DeviceRow[]>([]);
@@ -48,10 +44,8 @@ export class DeviceTableComponent {
 
     try {
       const updatedDevices = await this.deviceService.fetchConnectedDevices(
-        this.routerIp,
         this.username,
-        this.password,
-        this.useProxy()
+        this.password
       );
       this.devices.set(updatedDevices);
     } catch (error: unknown) {

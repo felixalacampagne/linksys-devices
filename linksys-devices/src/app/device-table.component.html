@@ -3,24 +3,6 @@
     <mat-toolbar color="primary">Linksys Router Device List</mat-toolbar>
 
     <div class="form-row">
-      <mat-slide-toggle
-        [ngModel]="useProxy()"
-        (ngModelChange)="useProxy.set($event)"
-        class="proxy-toggle"
-        >Use local dev-server proxy</mat-slide-toggle
-      >
-
-      <mat-form-field appearance="outline" class="router-ip-field">
-        <mat-label>Router IP</mat-label>
-        <input
-          matInput
-          placeholder="192.168.1.1"
-          [(ngModel)]="routerIp"
-          autocomplete="off"
-        />
-        <mat-hint *ngIf="useProxy()">Proxy target is configured in proxy.conf.js.</mat-hint>
-      </mat-form-field>
-
       <mat-form-field appearance="outline">
         <mat-label>Username</mat-label>
         <input
@@ -47,20 +29,15 @@
         color="primary"
         class="fetch-button"
         (click)="loadDevices()"
-        [disabled]="
-          loading() || !username.trim() || !password.trim() || (!useProxy() && !routerIp.trim())
-        "
+        [disabled]="loading() || !username.trim() || !password.trim()"
       >
         Fetch Devices
       </button>
     </div>
 
     <p class="hint">
-      When proxy mode is enabled, the app sends requests through the Angular dev server proxy.
-      Update the proxy target in proxy.conf.js when your router IP differs from the configured value.
-      When proxy mode is disabled, the router must allow browser CORS requests to `http://&lt;router-ip&gt;/JNAP/`.
-      Required response headers include `Access-Control-Allow-Origin`,
-      `Access-Control-Allow-Methods`, and `Access-Control-Allow-Headers`.
+      The app sends JNAP requests through the configured application proxy route.
+      The router IP is defined by the server routing rules, so no router IP entry is required in the browser form.
     </p>
 
     <div class="status-row" *ngIf="loading()">
@@ -99,7 +76,7 @@
     </div>
 
     <p class="empty-state" *ngIf="!loading() && !error() && devices().length === 0">
-      No devices have been loaded yet. Enter router credentials and click Fetch Devices.
+      No devices have been loaded yet. Enter your router credentials and click Fetch Devices.
     </p>
   </mat-card>
 </main>
