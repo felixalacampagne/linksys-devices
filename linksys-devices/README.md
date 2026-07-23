@@ -39,8 +39,9 @@ This will compile your project and store the build artifacts in the `dist/` dire
 ## Linksys JNAP Router Access
 
 This app uses a proxy-only request model for Linksys JNAP access. The browser never calls the router directly.
-This is because the browser blocks the calls to the router due to the absence of CORS headers in the response
-from the router. There is nothing that can be done about this without modifying the server code which is
+
+This is because the browser blocks the calls to the router due to the absence of CORS headers in the response from the router.
+There is nothing that can be done about this without modifying the server code which is
 obviously not possible and completely absurd - such is the nature of continuous improvement.
 
 All JNAP requests are routed through the configured application proxy path, and the router IP is defined by the server-side proxy configuration.
@@ -70,6 +71,7 @@ The example configuration is available in `apache-linksys-vhost.conf` and is tun
 - static files are served from the built Angular output under `/linksys/`
 - `/linksys/JNAP/` is passed through to the router through the configured server-side proxy rule
 - `/linksys` is redirected to `/linksys/` so the Angular base path resolves correctly
+
 
 ## Running unit tests
 

@@ -7,6 +7,7 @@ export interface DeviceRow {
   ipAddress: string;
   macAddress: string;
   dhcpReservation: 'Yes' | 'No';
+  isOffline: boolean;
 }
 
 interface JnapResponse<T = any> {
@@ -27,6 +28,7 @@ interface Device {
 
 interface Reservation {
   macAddress?: string;
+  ipAddress?: string;
 }
 
 interface LanSettingsOutput {
@@ -142,24 +144,29 @@ export class DeviceService {
 
     const devices = devicesResponse.output?.devices ?? [];
     const reservations = lanSettingsResponse.output?.dhcpSettings?.reservations ?? [];
-    const reservedMacs = new Set(
-      reservations.map((reservation: Reservation) => reservation.macAddress?.toUpperCase())
+    const reservedIpsByMac = new Map(
+      reservations
+        .filter((reservation: Reservation) => reservation.macAddress?.trim() && reservation.ipAddress?.trim())
+        .map((reservation: Reservation) => [reservation.macAddress?.toUpperCase(), reservation.ipAddress?.trim()])
     );
 
     const rows: DeviceRow[] = devices.map((device: Device) => {
       const connection = device.connections?.find(
         (item: { ipAddress?: string }) => !!item.ipAddress && !item.ipAddress.includes(':')
       );
-      const ipAddress = connection?.ipAddress ?? 'Offline';
       const macAddress = (device.knownMACAddresses?.[0] ?? 'N/A').toUpperCase();
-      const hasReservation = macAddress !== 'N/A' && reservedMacs.has(macAddress);
+      const reservedIpAddress = reservedIpsByMac.get(macAddress);
+      const isOffline = !connection?.ipAddress || connection.ipAddress === 'Offline';
+      const hasReservation = macAddress !== 'N/A' && !!reservedIpAddress;
       const dhcpReservation: DeviceRow['dhcpReservation'] = hasReservation ? 'Yes' : 'No';
+      const ipAddress = isOffline && hasReservation ? reservedIpAddress! : connection?.ipAddress ?? 'Offline';
 
       return {
         deviceName: this.extractCustomName(device),
         ipAddress,
         macAddress,
-        dhcpReservation
+        dhcpReservation,
+        isOffline
       };
     });
 
