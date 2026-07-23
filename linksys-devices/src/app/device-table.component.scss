@@ -49,6 +49,17 @@ mat-toolbar {
   margin-top: 1rem;
 }
 
+.share-row {
+  display: flex;
+  gap: 0.75rem;
+  align-items: center;
+  margin-top: 1rem;
+}
+
+.share-link-field {
+  flex: 1;
+}
+
 .table-container {
   overflow-x: auto;
   margin-top: 1.5rem;

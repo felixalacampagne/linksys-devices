@@ -61,6 +61,23 @@ The value is read by `proxy.conf.js` at startup, so you can change the router ta
 
 The PROXY_TARGET variable can also be set via the normal environment variable command before starting `ng serve`.
 
+## URL credentials
+
+You can provide the username and password directly in the URL query string. When both are present, the app automatically fetches the device list and hides the credential fields.
+
+Supported query parameters:
+
+- `u` or `username`
+- `p` or `password`
+
+The password value is stored in the URL using a URL-safe encoded form so it can be shared or bookmarked more safely than as a raw plaintext query value. When you enter credentials into the form, the page updates the current URL to that encoded shareable form.
+
+Example:
+
+```text
+http://hostname/linksys/?u=admin&p=YWRtaW4=
+```
+
 ## Production Apache reverse proxy
 
 A production Apache virtual host can serve the Angular application from the `/linksys` path prefix and reverse-proxy the JNAP API to the router.

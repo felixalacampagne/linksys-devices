@@ -2,13 +2,14 @@
   <mat-card>
     <mat-toolbar color="primary">Linksys Router Device List</mat-toolbar>
 
-    <div class="form-row">
+    <div class="form-row" *ngIf="showCredentialFields()">
       <mat-form-field appearance="outline">
         <mat-label>Username</mat-label>
         <input
           matInput
           placeholder="admin"
-          [(ngModel)]="username"
+          [ngModel]="username"
+          (ngModelChange)="onUsernameChanged($event)"
           autocomplete="username"
         />
       </mat-form-field>
@@ -19,7 +20,8 @@
           matInput
           type="password"
           placeholder="Password"
-          [(ngModel)]="password"
+          [ngModel]="password"
+          (ngModelChange)="onPasswordChanged($event)"
           autocomplete="current-password"
         />
       </mat-form-field>
@@ -38,7 +40,17 @@
     <p class="hint">
       The app sends JNAP requests through the configured application proxy route.
       The router IP is defined by the server routing rules, so no router IP entry is required in the browser form.
+      You can also provide credentials in the URL using `u` and `p` query parameters, where the password is URL-safe encoded for sharing.
+      When the credentials are present in the URL, the list loads automatically and the credential inputs are hidden.
     </p>
+
+    <div class="share-row" *ngIf="shareUrl()">
+      <mat-form-field appearance="outline" class="share-link-field">
+        <mat-label>Shareable link</mat-label>
+        <input matInput [ngModel]="shareUrl()" readonly />
+      </mat-form-field>
+      <button mat-stroked-button color="primary" (click)="copyShareUrl()">Copy link</button>
+    </div>
 
     <div class="status-row" *ngIf="loading()">
       <mat-progress-spinner mode="indeterminate" diameter="32"></mat-progress-spinner>
