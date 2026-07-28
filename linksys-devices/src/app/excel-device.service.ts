@@ -30,10 +30,10 @@ export class ExcelDeviceService
    async fetchExcelDevices(): Promise<ExcelDevice[]>
    {
       const url = this.makeApiname("devices");
-      // console.log("ExcelDeviceService.fetchExcelDevices: url:" + url);
+      console.log("ExcelDeviceService.fetchExcelDevices: url:" + url);
 
       const devicesResponse = await this.sendRequest<any[]>(url);
-      // console.log("ExcelDeviceService.fetchExcelDevices: devicesResponse:" + JSON.stringify(devicesResponse));
+      console.log("ExcelDeviceService.fetchExcelDevices: devicesResponse:" + JSON.stringify(devicesResponse));
 
       const devices = devicesResponse ?? [];
       const excelDevices: ExcelDevice[] = devices.map(device => ({
