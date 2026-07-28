@@ -12,49 +12,58 @@ import { MatToolbarModule } from '@angular/material/toolbar';
 import { ExcelDeviceService } from './excel-device.service';
 
 @Component({
-  selector: 'app-device-table',
-  standalone: true,
-  imports: [
-    CommonModule,
-    FormsModule,
-    MatCardModule,
-    MatFormFieldModule,
-    MatInputModule,
-    MatButtonModule,
-    MatTableModule,
-    MatToolbarModule,
-    MatProgressSpinnerModule
-  ],
-  templateUrl: './device-table.component.html',
-  styleUrls: ['./device-table.component.scss']
+   selector: 'app-device-table',
+   standalone: true,
+   imports: [
+      CommonModule,
+      FormsModule,
+      MatCardModule,
+      MatFormFieldModule,
+      MatInputModule,
+      MatButtonModule,
+      MatTableModule,
+      MatToolbarModule,
+      MatProgressSpinnerModule
+   ],
+   templateUrl: './device-table.component.html',
+   styleUrls: ['./device-table.component.scss']
 })
-export class DeviceTableComponent {
-  loading = signal(false);
-  error = signal<string | undefined>(undefined);
-  devices = signal<ExcelDevice[]>([]);
-  displayedColumns = ['macAddress', 'name', 'ipAddress', 'comment'];
+export class DeviceTableComponent
+{
+   loading = signal(false);
+   error = signal<string | undefined>(undefined);
+   devices = signal<ExcelDevice[]>([]);
+   displayedColumns = ['macAddress', 'name', 'ipAddress', 'comment'];
 
-  constructor(private deviceService: ExcelDeviceService) {
+   constructor(private deviceService: ExcelDeviceService)
+   {
+   }
 
-  }
+   ngOnInit()
+   {
+      this.loadDevices();
+   }
 
+   async loadDevices(): Promise<void>
+   {
+      this.error.set(undefined);
+      this.loading.set(true);
 
-  async loadDevices(): Promise<void> {
-    this.error.set(undefined);
-    this.loading.set(true);
-
-    try {
-      const updatedDevices = await this.deviceService.fetchExcelDevices( );
-      this.devices.set(updatedDevices);
-    } catch (error: unknown) {
-      this.devices.set([]);
-      this.error.set(
-        error instanceof Error
-          ? error.message
-          : 'Unable to fetch devices from the router.'
-      );
-    } finally {
-      this.loading.set(false);
-    }
-  }
+      try
+      {
+         const updatedDevices = await this.deviceService.fetchExcelDevices();
+         this.devices.set(updatedDevices);
+      } catch (error: unknown)
+      {
+         this.devices.set([]);
+         this.error.set(
+            error instanceof Error
+               ? error.message
+               : 'Unable to fetch devices from the router.'
+         );
+      } finally
+      {
+         this.loading.set(false);
+      }
+   }
 }
