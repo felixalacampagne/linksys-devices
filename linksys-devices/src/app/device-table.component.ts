@@ -38,7 +38,10 @@ export class DeviceTableComponent
    dataSource = new MatTableDataSource();
 
    // Grab a reference to the matSort directive from the HTML template
-   @ViewChild(MatSort) sort!: MatSort;
+   @ViewChild(MatSort) set matSort(sort: MatSort)
+   {
+      this.dataSource.sort = sort;
+   };
 
    constructor(private deviceService: ExcelDeviceService)
    {
@@ -52,7 +55,8 @@ export class DeviceTableComponent
 
    ngAfterViewInit() {
       // Bind the sorting logic to your data source
-      this.dataSource.sort = this.sort;
+      // Does not work with ngIf. Replaced with setter on @ViewChild
+      //this.dataSource.sort = this.sort;
    }
 
    async loadDevices(): Promise<void>
