@@ -35,12 +35,39 @@ export class DeviceTableComponent
    error = signal<string | undefined>(undefined);
    devices = signal<ExcelDevice[]>([]);
    displayedColumns = ['macAddress', 'name', 'ipAddress', 'comment'];
-   dataSource = new MatTableDataSource();
+   dataSource = new MatTableDataSource<ExcelDevice>();
 
    // Grab a reference to the matSort directive from the HTML template
    @ViewChild(MatSort) set matSort(sort: MatSort)
    {
       this.dataSource.sort = sort;
+
+      // Custom sorting logic
+      this.dataSource.sortingDataAccessor = (item: ExcelDevice, property: string): string | number => {
+       switch (property) {
+         // Column 1 & 2: Explicitly force case-insensitive string sorting
+         case 'macAddress':
+         case 'name':
+           return item[property] ? item[property].toString().toLowerCase() : '';
+
+         // Column 3: Convert IP Address string to a sortable 32-bit number
+         case 'ipAddress':
+            const ipaddr =  item.ipAddress;
+            // Check if the cell value is genuinely empty, blank, null or undefined
+            if (ipaddr === '' || ipaddr === null || ipaddr === undefined)
+            {
+               // Pin to bottom: Return maximum value for ASC, minimum value for DESC
+               const isAsc = this.dataSource.sort?.direction === 'asc';
+               return isAsc ? Number.MAX_SAFE_INTEGER : Number.MIN_SAFE_INTEGER;
+            }
+           return this.ipToNumber(ipaddr);
+
+         // Fallback for any other columns
+         default:
+           const value = (item as any)[property];
+           return typeof value === 'string' ? value.toLowerCase() : value;
+       }
+      };
    };
 
    constructor(private deviceService: ExcelDeviceService)
@@ -82,5 +109,16 @@ export class DeviceTableComponent
       {
          this.loading.set(false);
       }
+   }
+
+   /**
+    * Converts an IP address string (e.g., '192.168.0.10')
+    * into a unique numeric value for mathematical sorting.
+    */
+   private ipToNumber(ip: string): number {
+      if(ip.length==0) return 0; // Handle empty IP addresses
+      return ip
+         .split('.')
+         .reduce((ipInt, octet) => (ipInt << 8) + parseInt(octet, 10), 0) >>> 0;
    }
 }
