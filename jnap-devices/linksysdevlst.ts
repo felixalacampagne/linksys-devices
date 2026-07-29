@@ -6,6 +6,12 @@
 // Alternative command line is:
 // npx tsx script.ts
 
+import * as fs from 'fs';
+import * as path from 'path';
+
+// --- CONFIGURATION ---
+const OUTPUT_FILE = path.join(__dirname, 'network_devices.json');
+const POLL_INTERVAL_MS = 10000;  // Poll every 10 seconds
 
 // Configuration
 // Temporary solution to avoid hard coding sensitive info in the source file: read env.vars.
@@ -48,6 +54,22 @@ interface DevicesOutput {
   devices?: Device[];
 }
 
+// This should match ExcelDevice from the GUI component
+interface SavedDevice {
+  macAddress: string;
+  name?: string;
+  ipAddress?: string;
+  reserved?: string;
+  comment?: string;
+}
+
+// This should match ExcelDevice from the GUI component
+interface RawDevice {
+  macAddress: string;
+  name?: string;
+  ipAddress?: string;
+  reserved?: string;
+}
 
 // Helper to send JNAP POST requests
 async function sendJnapRequest(action : string, payload = {}, authToken = '') {
@@ -125,7 +147,7 @@ function sortObjectsByIP(array: any , ascending = true) {
 }
 
 
-async function getConnectedDevices() {
+async function getConnectedDevices() : Promise<RawDevice[]> {
   try {
 
     // This is not required - the token should just be the Basic auth credentials each time
@@ -138,7 +160,8 @@ async function getConnectedDevices() {
     //}
     //const authToken = loginResult.output.authToken;
 
-    const authToken = 'Basic ' + Buffer.from(USERNAME + ":" + PASSWORD).toString('base64');
+    //const authToken = 'Basic ' + Buffer.from(USERNAME + ":" + PASSWORD).toString('base64');
+    const authToken = 'Basic ' + btoa(`${USERNAME}:${PASSWORD}`);
     // console.log(USERNAME + ":" + PASSWORD + "... Auth Token: " + authToken);
 
     // Step 2: Fetch connected devices
@@ -169,6 +192,7 @@ async function getConnectedDevices() {
     // Step 4: Combine and format the data
     console.log('\n--- Connected Devices Report ---');
 
+    // TODO: There maybe multiple mac addresses here
     const formattedDevices = devices.map(device => {
       // Find the first available IPv4 connections
       const ipv4Connection = device.connections?.find(conn => conn.ipAddress && !conn.ipAddress.includes(':'));
@@ -180,24 +204,101 @@ async function getConnectedDevices() {
 
       // Check if the MAC address exists in the DHCP reservations array
       const hasReservation = reservedMacs.has(macAddress);
-
-      return {
-        'Device Name': finalName,
-        'IP Address': ipAddress,
-        'MAC Address': macAddress || 'N/A',
-        'DHCP Reservation': hasReservation ? 'Yes' : 'No'
+      return {   // RawDevice
+        name: finalName,
+        ipAddress: ipAddress,
+        macAddress: macAddress || 'N/A',
+        reserved: hasReservation ? 'Yes' : 'No'
       };
     });
 
 
     // Display the results in a clean table format
     //console.table(formattedDevices);
-    console.table(sortObjectsByIP(formattedDevices, true));
+    const sortedDevices = sortObjectsByIP(formattedDevices, true);
+    console.table(sortedDevices);
+    return sortedDevices;
 
   } catch (error: unknown) {
     console.error('Error executing JNAP script:', JSON.stringify(error));
+    return [];
   }
 }
+/**
+ * Loads previously logged entries from the JSON flat file safely
+ */
+function loadExistingLog(): Record<string, SavedDevice> {
+  if (!fs.existsSync(OUTPUT_FILE)) {
+    return {};
+  }
+  try {
+    const rawData = fs.readFileSync(OUTPUT_FILE, 'utf-8');
+    return JSON.parse(rawData);
+  } catch (error) {
+    console.error('Could not parse existing log file. Starting fresh.');
+    return {};
+  }
+}
+// --- MAIN LOOP ---
+async function pollLoop() {
+  console.log(`Starting device monitoring log targeted at http://${ROUTER_IP}...`);
 
+  while (true) {
+    try {
+      const jnapDevices = await getConnectedDevices();
+      const knownDevices = loadExistingLog();
+      let hasChanges = false;
+      const timestamp = new Date().toISOString();
+
+      for (const device of jnapDevices) {
+        const mac = device.macAddress;
+        const ip = device.ipAddress ?? 'unknown';
+        const breserved = device.reserved ?? false;
+        const hostname = device.name ?? 'Unknown Device';
+
+        if (!mac) continue;
+
+        if (!knownDevices[mac]) {
+          // New device discovered! Add a record to our database.
+          console.log(`[NEW DEVICE FOUND] Name: ${hostname} | IP: ${ip} | MAC: ${mac}`);
+          knownDevices[mac] = {
+            macAddress: mac,
+            ipAddress: ip,
+            name: hostname,
+            reserved: breserved ? "Y" : "N"
+          };
+          hasChanges = true;
+        } else {
+          // Device exists, check if properties changed
+          const existing = knownDevices[mac];
+          const reserved = breserved ? "Y" : "N";
+
+          if (existing.ipAddress !== ip || existing.name !== hostname || existing.reserved !== reserved) {
+            console.log(`[UPDATE] ${hostname} (${mac}) -> IP: ${ip}, Reserved: ${reserved}`);
+            existing.ipAddress = ip;
+            existing.name = hostname;
+            existing.reserved = reserved;
+            hasChanges = true;
+          }
+        }
+      }
+
+      // Commit changes to disk immediately if something changed
+      if (hasChanges) {
+        fs.writeFileSync(OUTPUT_FILE, JSON.stringify(knownDevices, null, 2), 'utf-8');
+        console.log(`Log successfully synchronized to disk at ${timestamp}`);
+      }
+
+    } catch (err: any) {
+      console.error(`Polling iteration encountered an error: ${err.message}`);
+    }
+
+    // Sleep before loop iteration continues
+    await new Promise(resolve => setTimeout(resolve, POLL_INTERVAL_MS));
+  }
+}
 // Run the script
 getConnectedDevices();
+
+// Run this instead to poll the router
+// pollLoop();
