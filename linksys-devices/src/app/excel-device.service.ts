@@ -19,7 +19,15 @@ export class ExcelDeviceService
       }
       else
       {
-         this.serverhost = window.location.origin;
+         // Need the app name eg. linksys in http:/server/linksys/ to be able to call the api
+         // in the production environment.
+         // This is a hack to get the app name from the url.
+         // It will not work if the app loaded using a path which includes a filename,
+         // eg. http:/server/linksys/index.html.
+         // TODO define the data location for production, keep the real data file outside
+         // of the app folder.
+         this.serverhost = window.location.href;
+         console.log("ExcelDeviceService: serverhost:" + this.serverhost);
       }
 
       this.apiext = environment.api_ext;
