@@ -1,3 +1,7 @@
 *.bak
 *.env
 node_modules
+*.log
+network_devices.json
+dist
+package-lock.json

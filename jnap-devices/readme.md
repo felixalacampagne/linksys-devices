@@ -9,9 +9,21 @@ NB I already had linksysdevlst.js which I had renamed to linksysdev.ts. The gene
 package.json referenced main.js which I changed to linksysdev.ts - don't really know
 whether this is necessary.
 
+To execute the script without compiling into a standalone file:
+
+node --experimental-strip-types linksysdevlst.ts
+
 To make standalone file
 
 npm install -D tsup
+
+Add following line to 'scripts' in package.json
+
+"build": "tsup poll-router.ts --format cjs --minify --clean --platform node"
+
+To build the standalone file
+
+npm run build
 
 Generates .js file in 'dist'. To run use
 
