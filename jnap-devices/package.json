@@ -1,0 +1,20 @@
+{
+  "name": "jnap-devices",
+  "version": "1.0.0",
+  "description": "",
+  "main": "linksysdevlst.ts",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "build": "tsup linksysdevlst.ts --format cjs --minify --clean --platform node"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "type": "module",
+  "devDependencies": {
+    "@types/node": "^26.1.2",
+    "tsup": "^8.5.1",
+    "tsx": "^4.23.1",
+    "typescript": "^7.0.2"
+  }
+}
