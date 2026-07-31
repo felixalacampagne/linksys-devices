@@ -324,33 +324,34 @@ const jnapDevices = await getConnectedDevices();
           // Device exists, check if properties changed
           const existing = knownDevices.find(d => d.MAC_Address === mac);
           const reserved = breserved ? "Y" : "";
-
+          let hasNewChanges = false;
           if(existing)
           {
             if(existing.IP_Address !== ip)
             {
               existing.IP_Address = ip;
-              hasChanges = true;
+              hasNewChanges = true;
             }
             if(existing.Name?.toLowerCase() !== hostname.toLowerCase())
             {
               existing.Name = hostname;
-              hasChanges = true;
+              hasNewChanges = true;
             }
             if(existing.Reserved !== reserved)
             {
               existing.Reserved = reserved;
-              hasChanges = true;
+              hasNewChanges = true;
             }
             if((comment && (comment != existing.Comment)
                         && (comment.toLowerCase() != hostname.toLowerCase())))
             {
               existing.Comment = comment;
-              hasChanges = true;
+              hasNewChanges = true;
             }
-            if (hasChanges)
+            if (hasNewChanges)
             {
               console.log(`[UPDATE] ${existing.Name} (${mac}) -> IP: ${ip}, Reserved: ${reserved} Comment: ${comment}`);
+              hasChanges = true;
             }
           }
         }
