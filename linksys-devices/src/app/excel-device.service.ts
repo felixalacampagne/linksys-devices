@@ -50,7 +50,7 @@ export class ExcelDeviceService
          ipAddress: device.IP_Address,
          reserved: device.Reserved,
          comment: device.Comment,
-         sortableIp: device.Sortable_IP
+         offline: device.offline
       }));
       // console.log("ExcelDeviceService.fetchExcelDevices: excelDevices:" + JSON.stringify(excelDevices));
       return excelDevices;
@@ -65,9 +65,9 @@ export class ExcelDeviceService
                headers: this.createHeaders()
             })
          );
-      } catch (error: unknown)
+      } catch (error: any)
       {
-         console.log("ExcelDeviceService.sendRequest: error:" + JSON.stringify(error));
+         console.log("ExcelDeviceService.sendRequest: URL: " + url + " error:" + JSON.stringify(error));
          throw this.buildHttpError(error);
       }
    }

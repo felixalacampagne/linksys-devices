@@ -1,9 +1,18 @@
-//{"MAC_Address":"00:05:CD:24:98:60","Name":"AVR-3312","IP_Address":"","Reserved":"","Comment":"","Sortable_IP":""}
+// From linksysdevlst.ts
+//interface SavedDevice {
+//   MAC_Address: string;
+//   Name?: string;
+//   IP_Address?: string;
+//   Reserved?: boolean;
+//   Comment?: string;
+//   offline?: boolean;
+// }
+
 interface ExcelDevice {
   macAddress: string;
   name?: string;
   ipAddress?: string;
-  reserved?: string;
+  reserved?: boolean;
   comment?: string;
-  sortableIp?: string;
+  offline?: boolean;
 }
