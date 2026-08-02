@@ -111,6 +111,7 @@ interface RawDevice {
   ipAddress?: string;
   reserved?: boolean;
   comment?: string;
+  offline?: boolean;
 }
 
 // Helper to send JNAP POST requests
@@ -235,6 +236,7 @@ async function getConnectedDevices() : Promise<RawDevice[]> {
       // Find the first available IPv4 connections
       const ipv4Connection = device.connections?.find(conn => conn.ipAddress && !conn.ipAddress.includes(':'));
       let ipAddress = ipv4Connection ? ipv4Connection.ipAddress : '';
+      const offline : boolean = (ipAddress =='');
       const macAddress = device.knownMACAddresses ? (device.knownMACAddresses[0]?? '').toUpperCase() || '' : '';
       if(macAddress === '') {
         console.warn(`Device with friendlyName "${device.friendlyName}" has no known MAC address. Skipping.`);
@@ -262,7 +264,8 @@ async function getConnectedDevices() : Promise<RawDevice[]> {
         ipAddress: ipAddress,
         macAddress: macAddress,
         reserved: hasReservation, //  ? 'Yes' : 'No'
-        comment: comment
+        comment: comment,
+        offline: offline
       };
     });
 
@@ -307,6 +310,7 @@ const jnapDevices = await getConnectedDevices();
         const breserved = device.reserved ?? false;
         const hostname = device.name ?? 'Unknown Device';
         const comment = device.comment ?? '';
+        const offline = device.offline ?? false;
         let change : string = "";
         if (!mac) continue;
 
@@ -319,7 +323,7 @@ const jnapDevices = await getConnectedDevices();
             Name: hostname,
             Reserved: breserved,
             Comment: comment,
-            offline: (ip=='') ? true : false
+            offline: offline
           });
           change = "New";
           hasChanges = true;
@@ -328,7 +332,6 @@ const jnapDevices = await getConnectedDevices();
           // Device exists, check if properties changed
           const existing = knownDevices.find(d => d.MAC_Address === mac);
           const reserved = breserved;
-          const offline = (ip == "") ? true : false;
           let hasNewChanges = false;
           if(existing)
           {
