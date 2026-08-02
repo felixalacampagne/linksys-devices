@@ -25,7 +25,7 @@ const POLL_INTERVAL_MS = process.env.POLLINTERVAL ? parseInt(process.env.POLLINT
 const JNAP_URL = `http://${ROUTER_IP}/JNAP/`;
 const JNAP_ACTION_PREFIX = 'http://linksys.com/jnap/';
 
-const OUTPUT_FILE = path.join(DATADIR, 'network_devices.json');
+const OUTPUT_FILE = path.join(DATADIR, 'devices.json');
 
 interface JnapResponse<T = any> {
   output?: T;
