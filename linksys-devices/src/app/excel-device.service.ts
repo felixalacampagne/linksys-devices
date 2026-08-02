@@ -23,7 +23,7 @@ export class ExcelDeviceService
          // in the production environment.
          // This is a hack to get the app name from the url.
          // It will not work if the app loaded using a path which includes a filename,
-         // eg. http:/server/linksys/index.html.
+         // eg. http:/server/linksys/index.html, http://localhost/#/.
          // TODO define the data location for production, keep the real data file outside
          // of the app folder.
          this.serverhost = window.location.href;
