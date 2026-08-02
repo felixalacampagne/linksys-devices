@@ -5,6 +5,6 @@ export const environment = {
    api_app: "/",
    envName: ' PROD',
    uiversion: ' v0.1',
-   folder: '/data',
+   folder: 'data',
    api_ext: '.json'
  };

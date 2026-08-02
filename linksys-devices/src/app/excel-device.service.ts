@@ -23,16 +23,35 @@ export class ExcelDeviceService
          // in the production environment.
          // This is a hack to get the app name from the url.
          // It will not work if the app loaded using a path which includes a filename,
-         // eg. http:/server/linksys/index.html, http://localhost/#/.
+         // eg. http:/server/linksys, http:/server/linksys/index.html, http://localhost/#/.
          // TODO define the data location for production, keep the real data file outside
          // of the app folder.
-         this.serverhost = window.location.href;
+         //this.serverhost = window.location.href;
+
+         // Attempt to dynamically determine application URL and thus the URL for the data dir.
+         // Based on Google AI suggestion.
+         const host = window.location.origin;
+         const path = window.location.pathname; // e.g., "/applicationname/index.html" or "/applicationname/home"
+         // Split the path by slashes and filter out empty strings
+         const pathSegments = path.split('/').filter(segment => segment.length > 0);
+
+         // If deployed in a sub-directory, the first segment is your app name
+         // e.g., if path is "/applicationname/home", pathSegments[0] is "applicationname"
+         let apppath= "/";
+         if (pathSegments.length > 0 && !pathSegments[0].includes('.'))
+         {
+            apppath = `/${pathSegments[0]}/`;
+         }
+
+         this.serverhost = host + apppath; // Ends with '/'
+
          console.log("ExcelDeviceService: serverhost:" + this.serverhost);
       }
 
       this.apiext = environment.api_ext;
       this.apiapp = environment.folder + environment.api_app;
       this.apiurl = this.serverhost + this.apiapp
+      console.log("ExcelDeviceService: apiurl:" + this.apiurl);
    }
 
    async fetchExcelDevices(): Promise<ExcelDevice[]>
