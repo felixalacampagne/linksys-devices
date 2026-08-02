@@ -100,8 +100,9 @@ interface SavedDevice {
   MAC_Address: string;
   Name?: string;
   IP_Address?: string;
-  Reserved?: string;
+  Reserved?: boolean;
   Comment?: string;
+  offline?: boolean;
 }
 
 interface RawDevice {
@@ -316,22 +317,33 @@ const jnapDevices = await getConnectedDevices();
             MAC_Address: mac,
             IP_Address: ip,
             Name: hostname,
-            Reserved: breserved ? "Y" : "",
+            Reserved: breserved,
             Comment: comment,
+            offline: (ip=='') ? true : false
           });
           hasChanges = true;
         } else {
           // Device exists, check if properties changed
           const existing = knownDevices.find(d => d.MAC_Address === mac);
-          const reserved = breserved ? "Y" : "";
+          const reserved = breserved;
+          const offline = (ip == "") ? true : false;
           let hasNewChanges = false;
           if(existing)
           {
-            if(existing.IP_Address !== ip)
+            // Keep the previous IP if the device has gone offline (i.e., the current IP is empty).
+            // The offline flag will indicate that the device is currently offline.
+            if((ip !== "") && (existing.IP_Address !== ip))
             {
               existing.IP_Address = ip;
               hasNewChanges = true;
             }
+
+            if(existing.offline !== offline)
+            {
+              existing.offline = offline;
+              hasNewChanges = true;
+            }
+
             if(existing.Name?.toLowerCase() !== hostname.toLowerCase())
             {
               existing.Name = hostname;
