@@ -268,8 +268,8 @@ async function getConnectedDevices() : Promise<RawDevice[]> {
 
     // Display the results in a clean table format
     const sortedDevices = sortObjectsByIP(formattedDevices, "ipAddress", true);
-    console.log('Sorted RawDevices:');
-    console.table(sortedDevices);
+    // console.log('Sorted RawDevices:');
+    // console.table(sortedDevices);
     return sortedDevices;
 
   }
@@ -307,7 +307,7 @@ const jnapDevices = await getConnectedDevices();
         const breserved = device.reserved ?? false;
         const hostname = device.name ?? 'Unknown Device';
         const comment = device.comment ?? '';
-
+        let change : string = "";
         if (!mac) continue;
 
         if (!knownDevices.find(d => d.MAC_Address === mac)) {
@@ -321,7 +321,9 @@ const jnapDevices = await getConnectedDevices();
             Comment: comment,
             offline: (ip=='') ? true : false
           });
+          change = "New";
           hasChanges = true;
+
         } else {
           // Device exists, check if properties changed
           const existing = knownDevices.find(d => d.MAC_Address === mac);
@@ -336,33 +338,38 @@ const jnapDevices = await getConnectedDevices();
             {
               existing.IP_Address = ip;
               hasNewChanges = true;
+              change += "ip:" + ip + " ";
             }
 
             if(existing.offline !== offline)
             {
               existing.offline = offline;
               hasNewChanges = true;
+              change += "offline:" + offline + " ";
             }
 
             if(existing.Name?.toLowerCase() !== hostname.toLowerCase())
             {
               existing.Name = hostname;
               hasNewChanges = true;
+              change += "name:" + hostname + " ";
             }
             if(existing.Reserved !== reserved)
             {
               existing.Reserved = reserved;
               hasNewChanges = true;
+              change += "reserved:" + reserved + " ";
             }
             if((comment && (comment != existing.Comment)
                         && (comment.toLowerCase() != hostname.toLowerCase())))
             {
               existing.Comment = comment;
               hasNewChanges = true;
+              change += "comment:" + comment + " ";
             }
             if (hasNewChanges)
             {
-              console.log(`[UPDATE] ${existing.Name} (${mac}) -> IP: ${ip}, Reserved: ${reserved} Comment: ${comment}`);
+              console.log(`[UPDATE] ${existing.Name} (${mac}) -> changes: ${change.trim()}`);
               hasChanges = true;
             }
           }
