@@ -9,7 +9,7 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatSortModule, MatSort } from '@angular/material/sort';
-import { ExcelDeviceService } from './excel-device.service';
+import { NetworkDeviceService } from './excel-device.service';
 
 @Component({
    selector: 'app-device-table',
@@ -33,9 +33,9 @@ export class DeviceTableComponent
 {
    loading = signal(false);
    error = signal<string | undefined>(undefined);
-   devices = signal<ExcelDevice[]>([]);
+   devices = signal<NetworkDevice[]>([]);
    displayedColumns = ['macAddress', 'name', 'ipAddress', 'comment'];
-   dataSource = new MatTableDataSource<ExcelDevice>();
+   dataSource = new MatTableDataSource<NetworkDevice>();
 
    // Grab a reference to the matSort directive from the HTML template
    @ViewChild(MatSort) set matSort(sort: MatSort)
@@ -43,7 +43,7 @@ export class DeviceTableComponent
       this.dataSource.sort = sort;
 
       // Custom sorting logic
-      this.dataSource.sortingDataAccessor = (item: ExcelDevice, property: string): string | number => {
+      this.dataSource.sortingDataAccessor = (item: NetworkDevice, property: string): string | number => {
        switch (property) {
          // Column 1 & 2: Explicitly force case-insensitive string sorting
          case 'macAddress':
@@ -70,7 +70,7 @@ export class DeviceTableComponent
       };
    };
 
-   constructor(private deviceService: ExcelDeviceService)
+   constructor(private deviceService: NetworkDeviceService)
    {
    }
 

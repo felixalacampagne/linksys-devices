@@ -8,7 +8,7 @@
 //   offline?: boolean;
 // }
 
-interface ExcelDevice {
+interface NetworkDevice {
   macAddress: string;
   name?: string;
   ipAddress?: string;

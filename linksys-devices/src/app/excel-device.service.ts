@@ -4,7 +4,7 @@ import { firstValueFrom } from "rxjs";
 import { environment } from '../environments/environment';
 
 @Injectable({ providedIn: 'root' })
-export class ExcelDeviceService
+export class NetworkDeviceService
 {
    serverhost: string;
    apiext: string;
@@ -54,7 +54,7 @@ export class ExcelDeviceService
       console.log("ExcelDeviceService: apiurl:" + this.apiurl);
    }
 
-   async fetchExcelDevices(): Promise<ExcelDevice[]>
+   async fetchExcelDevices(): Promise<NetworkDevice[]>
    {
       const url = this.makeApiname("devices");
       console.log("ExcelDeviceService.fetchExcelDevices: url:" + url);
@@ -63,16 +63,18 @@ export class ExcelDeviceService
       console.log("ExcelDeviceService.fetchExcelDevices: devicesResponse:" + JSON.stringify(devicesResponse));
 
       const devices = devicesResponse ?? [];
-      const excelDevices: ExcelDevice[] = devices.map(device => ({
-         macAddress: device.MAC_Address,
-         name: device.Name,
-         ipAddress: device.IP_Address,
-         reserved: device.Reserved,
-         comment: device.Comment,
+      // The response should now already contain NetworkDevice items so the map is not really necessary
+      // but we can still use it to ensure the type is correct.
+      const networkDevices: NetworkDevice[] = devices.map(device => ({
+         macAddress: device.macAddress,
+         name: device.name,
+         ipAddress: device.ipAddress,
+         reserved: device.reserved,
+         comment: device.comment,
          offline: device.offline
       }));
-      // console.log("ExcelDeviceService.fetchExcelDevices: excelDevices:" + JSON.stringify(excelDevices));
-      return excelDevices;
+      // console.log("ExcelDeviceService.fetchExcelDevices: networkDevices:" + JSON.stringify(networkDevices));
+      return networkDevices;
    }
 
    private async sendRequest<T>(url: string): Promise<T>
