@@ -2,6 +2,7 @@ import { HttpClient, HttpErrorResponse, HttpHeaders } from "@angular/common/http
 import { Injectable } from "@angular/core";
 import { firstValueFrom } from "rxjs";
 import { environment } from '../environments/environment';
+import { NetworkDevice } from './network-device.model';  // seems to be not really necessary
 
 @Injectable({ providedIn: 'root' })
 export class NetworkDeviceService
@@ -19,23 +20,15 @@ export class NetworkDeviceService
       }
       else
       {
-         // Need the app name eg. linksys in http:/server/linksys/ to be able to call the api
-         // in the production environment.
-         // This is a hack to get the app name from the url.
-         // It will not work if the app loaded using a path which includes a filename,
-         // eg. http:/server/linksys, http:/server/linksys/index.html, http://localhost/#/.
-         // TODO define the data location for production, keep the real data file outside
-         // of the app folder.
-         //this.serverhost = window.location.href;
-
-         // Attempt to dynamically determine application URL and thus the URL for the data dir.
+         // Need to dynamically determine application URL and thus the URL for the data dir.
          // Based on Google AI suggestion.
          const host = window.location.origin;
          const path = window.location.pathname; // e.g., "/applicationname/index.html" or "/applicationname/home"
+
          // Split the path by slashes and filter out empty strings
          const pathSegments = path.split('/').filter(segment => segment.length > 0);
 
-         // If deployed in a sub-directory, the first segment is your app name
+         // When deployed in a sub-directory, the first segment is the app name
          // e.g., if path is "/applicationname/home", pathSegments[0] is "applicationname"
          let apppath= "/";
          if (pathSegments.length > 0 && !pathSegments[0].includes('.'))
@@ -45,22 +38,22 @@ export class NetworkDeviceService
 
          this.serverhost = host + apppath; // Ends with '/'
 
-         console.log("ExcelDeviceService: serverhost:" + this.serverhost);
+         console.log("NetworkDeviceService: serverhost:" + this.serverhost);
       }
 
       this.apiext = environment.api_ext;
       this.apiapp = environment.folder + environment.api_app;
       this.apiurl = this.serverhost + this.apiapp
-      console.log("ExcelDeviceService: apiurl:" + this.apiurl);
+      console.log("NetworkDeviceService: apiurl:" + this.apiurl);
    }
 
    async fetchExcelDevices(): Promise<NetworkDevice[]>
    {
       const url = this.makeApiname("devices");
-      console.log("ExcelDeviceService.fetchExcelDevices: url:" + url);
+      console.log("NetworkDeviceService.fetchExcelDevices: url:" + url);
 
       const devicesResponse = await this.sendRequest<any[]>(url);
-      console.log("ExcelDeviceService.fetchExcelDevices: devicesResponse:" + JSON.stringify(devicesResponse));
+      console.log("NetworkDeviceService.fetchExcelDevices: devicesResponse:" + JSON.stringify(devicesResponse));
 
       const devices = devicesResponse ?? [];
       // The response should now already contain NetworkDevice items so the map is not really necessary
@@ -73,7 +66,7 @@ export class NetworkDeviceService
          comment: device.comment,
          offline: device.offline
       }));
-      // console.log("ExcelDeviceService.fetchExcelDevices: networkDevices:" + JSON.stringify(networkDevices));
+      // console.log("NetworkDeviceService.fetchExcelDevices: networkDevices:" + JSON.stringify(networkDevices));
       return networkDevices;
    }
 
@@ -88,7 +81,7 @@ export class NetworkDeviceService
          );
       } catch (error: any)
       {
-         console.log("ExcelDeviceService.sendRequest: URL: " + url + " error:" + JSON.stringify(error));
+         console.log("NetworkDeviceService.sendRequest: URL: " + url + " error:" + JSON.stringify(error));
          throw this.buildHttpError(error);
       }
    }
@@ -100,7 +93,7 @@ export class NetworkDeviceService
       });
    }
 
-   private buildHttpError(error: unknown): Error
+   private buildHttpError(error: any): Error
    {
       if (error instanceof HttpErrorResponse)
       {
@@ -113,7 +106,7 @@ export class NetworkDeviceService
          if (error.status === 0)
          {
             return new Error(
-               `Unable to load device data. Check the Angular proxy, the router target, and network/CORS availability.`
+               `Unable to load device data.`
             );
          }
 
@@ -133,7 +126,7 @@ export class NetworkDeviceService
       // parsing handled automatically.
       //
       // It appears that giving the test data file and extension of .json prevents the
-      // garbage from being appended to the respone and thus allows the automatic
+      // garbage from being appended to the respone and thus allows the automatic parsing
       // to be performed. Obviously the actual apis should not be given an extension
       // but using the environment file allows the extension to be added only when
       // running in the backend less test environment. It still requires all api calls

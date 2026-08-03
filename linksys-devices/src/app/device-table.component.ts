@@ -9,7 +9,8 @@ import { MatProgressSpinnerModule } from '@angular/material/progress-spinner';
 import { MatTableModule, MatTableDataSource } from '@angular/material/table';
 import { MatToolbarModule } from '@angular/material/toolbar';
 import { MatSortModule, MatSort } from '@angular/material/sort';
-import { NetworkDeviceService } from './excel-device.service';
+import { NetworkDeviceService } from './network-device.service';
+import { NetworkDevice } from './network-device.model';  // seems to be not really necessary
 
 @Component({
    selector: 'app-device-table',
