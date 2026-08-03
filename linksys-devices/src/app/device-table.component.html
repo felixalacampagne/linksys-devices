@@ -24,7 +24,7 @@
           <td
             mat-cell
             *matCellDef="let device"
-            [class.reserved-ip-bold]="device.reserved === 'Y'"
+            [class.reserved-ip-bold]="device.reserved"
           >
             {{ device.ipAddress }}
           </td>
@@ -39,7 +39,7 @@
         <tr
           mat-row
           *matRowDef="let row; columns: displayedColumns"
-          [class.offline-row]="row.isOffline"
+          [class.offline-row]="row.offline"
         ></tr>
       </table>
     </div>

@@ -25,7 +25,7 @@ const POLL_INTERVAL_MS = process.env.POLLINTERVAL ? parseInt(process.env.POLLINT
 const JNAP_URL = `http://${ROUTER_IP}/JNAP/`;
 const JNAP_ACTION_PREFIX = 'http://linksys.com/jnap/';
 
-const OUTPUT_FILE = path.join(DATADIR, 'network_devices.json');
+const OUTPUT_FILE = path.join(DATADIR, 'devices.json');
 
 interface JnapResponse<T = any> {
   output?: T;
@@ -96,20 +96,13 @@ interface DevicesOutput {
 }
 
 // This should match ExcelDevice from the GUI component
-interface SavedDevice {
-  MAC_Address: string;
-  Name?: string;
-  IP_Address?: string;
-  Reserved?: string;
-  Comment?: string;
-}
-
-interface RawDevice {
+interface NetworkDevice {
   macAddress: string;
   name?: string;
   ipAddress?: string;
   reserved?: boolean;
   comment?: string;
+  offline?: boolean;
 }
 
 // Helper to send JNAP POST requests
@@ -182,7 +175,7 @@ function sortObjectsByIP(array: any , ipProperty: string, ascending = true) {
 }
 
 
-async function getConnectedDevices() : Promise<RawDevice[]> {
+async function getConnectedDevices() : Promise<NetworkDevice[]> {
   try {
 
     // The token should just be the Basic auth credentials each time
@@ -220,55 +213,64 @@ async function getConnectedDevices() : Promise<RawDevice[]> {
     // multiple MAC addresses for a single device. For now, just use the first MAC address.
     // When no DHCP reservation is found for the first MAC address then use the first IP address found in the
     // connections array, and user custom name or the friendlyName. If no IP address is found then use 'N/A' for the IP address.
-    const formattedDevices = devices
-    .filter(device => device.knownMACAddresses
-                   && device.knownMACAddresses.length > 0
-                   && device.knownMACAddresses[0]
-                   && device.knownMACAddresses[0] != '')  // Filter out devices without known MAC addresses
-    .map(device => {
-      if (!device.knownMACAddresses || device.knownMACAddresses.length === 0 || !device.knownMACAddresses[0]) {
-        // This should never happen with the filter
-        console.warn(`Device with friendlyName "${device.friendlyName}" has no known MAC address. Skipping.`);
-        return null; // Skip this device
-      }
-      // Find the first available IPv4 connections
-      const ipv4Connection = device.connections?.find(conn => conn.ipAddress && !conn.ipAddress.includes(':'));
-      let ipAddress = ipv4Connection ? ipv4Connection.ipAddress : '';
-      const macAddress = device.knownMACAddresses ? (device.knownMACAddresses[0]?? '').toUpperCase() || '' : '';
-      if(macAddress === '') {
-        console.warn(`Device with friendlyName "${device.friendlyName}" has no known MAC address. Skipping.`);
-        return null; // Skip this device
-      }
-      // console.log(`Processing device: MAC=${macAddress}, IP=${ipAddress}, Name=${device.friendlyName}`);
-      // Check if the MAC address exists in the DHCP reservations array
-      const reservation = reservedMacs.get(macAddress);
-      const hasReservation = !!reservation;
-      let finalName = '';
-      let comment: string | undefined = '';
-      if(reservation)
-      {
-        finalName = reservation.description;
-        ipAddress = reservation.ipAddress;  // Override IP address with the reserved one
-        comment = extractCustomName(device);
-      }
-      else
-      {
-        finalName = extractCustomName(device);
-      }
+    const formattedDevices : NetworkDevice[]  = devices
+            .filter(device => device.knownMACAddresses
+                           && device.knownMACAddresses.length > 0
+                           && device.knownMACAddresses[0]
+                           && device.knownMACAddresses[0] != '')  // Filter out devices without known MAC addresses
+            .map((device) : NetworkDevice =>
+            {
+               // This should not happen. Trying to log a warning makes it impossible to assign a type to the formattedDevices array.
+               // if (!device.knownMACAddresses || device.knownMACAddresses.length === 0 || !device.knownMACAddresses[0]) {
+               //   // This should never happen with the filter
+               //   console.warn(`Device with friendlyName "${device.friendlyName}" has no known MAC address. Skipping.`);
+               //   return null; // Skip this device
+               // }
 
-      return {   // RawDevice
-        name: finalName,
-        ipAddress: ipAddress,
-        macAddress: macAddress,
-        reserved: hasReservation, //  ? 'Yes' : 'No'
-        comment: comment
-      };
-    });
+               // Find the first available IPv4 connections
+               const ipv4Connection = device.connections?.find(conn => conn.ipAddress && !conn.ipAddress.includes(':'));
+               let ipAddress : string = ipv4Connection ? (ipv4Connection.ipAddress ?? '') : '';
+               const offline : boolean = (ipAddress =='');
+
+               const macAddress = device.knownMACAddresses ? (device.knownMACAddresses[0]?? '').toUpperCase() || '' : '';
+
+               // Again this should not happen with the filter and trying to log a warning makes it impossible to assign a type to the formattedDevices array.
+               // if(macAddress === '') {
+               //   console.warn(`Device with friendlyName "${device.friendlyName}" has no known MAC address. Skipping.`);
+               //   return null; // Skip this device
+               // }
+
+               // console.log(`Processing device: MAC=${macAddress}, IP=${ipAddress}, Name=${device.friendlyName}`);
+               // Check if the MAC address exists in the DHCP reservations array
+               const reservation = reservedMacs.get(macAddress);
+               const hasReservation = !!reservation;
+               let finalName = '';
+               let comment: string | undefined = '';
+               if(reservation)
+               {
+                 finalName = reservation.description;
+                 ipAddress = reservation.ipAddress;  // Override IP address with the reserved one
+                 comment = extractCustomName(device);
+               }
+               else
+               {
+                 finalName = extractCustomName(device);
+               }
+
+               return {   // NetworkDevice
+                 macAddress: macAddress,
+                 name : finalName,
+                 ipAddress: ipAddress,
+                 reserved: hasReservation,
+                 comment: comment,
+                 offline: offline
+               };
+            });
 
     // Display the results in a clean table format
     const sortedDevices = sortObjectsByIP(formattedDevices, "ipAddress", true);
-    console.log('Sorted RawDevices:');
-    console.table(sortedDevices);
+    // console.log('Sorted NetworkDevices:');
+    // console.table(sortedDevices);
     return sortedDevices;
 
   }
@@ -281,7 +283,7 @@ async function getConnectedDevices() : Promise<RawDevice[]> {
 /**
  * Loads previously logged entries from the JSON flat file safely
  */
-function loadExistingLog():SavedDevice [] {
+function loadExistingLog():NetworkDevice [] {
   if (!fs.existsSync(OUTPUT_FILE)) {
     return [];
   }
@@ -296,7 +298,7 @@ function loadExistingLog():SavedDevice [] {
 
 async function checkRouterForChanges() {
 const jnapDevices = await getConnectedDevices();
-      const knownDevices : SavedDevice[] = loadExistingLog();
+      const knownDevices : NetworkDevice[] = loadExistingLog();
       let hasChanges = false;
       const timestamp = new Date().toISOString();
 
@@ -306,51 +308,69 @@ const jnapDevices = await getConnectedDevices();
         const breserved = device.reserved ?? false;
         const hostname = device.name ?? 'Unknown Device';
         const comment = device.comment ?? '';
-
+        const offline = device.offline ?? false;
+        let change : string = "";
         if (!mac) continue;
 
-        if (!knownDevices.find(d => d.MAC_Address === mac)) {
+        if (!knownDevices.find(d => d.macAddress === mac)) {
           // New device discovered! Add a record to our database.
           console.log(`[NEW DEVICE FOUND] Name: ${hostname} | IP: ${ip} | MAC: ${mac}`);
           knownDevices.push({
-            MAC_Address: mac,
-            IP_Address: ip,
-            Name: hostname,
-            Reserved: breserved ? "Y" : "",
-            Comment: comment,
+            macAddress: mac,
+            ipAddress: ip,
+            name: hostname,
+            reserved: breserved,
+            comment: comment,
+            offline: offline
           });
+          change = "New";
           hasChanges = true;
+
         } else {
           // Device exists, check if properties changed
-          const existing = knownDevices.find(d => d.MAC_Address === mac);
-          const reserved = breserved ? "Y" : "";
+          const existing : NetworkDevice | undefined = knownDevices.find(d => d.macAddress === mac);
+          const reserved = breserved;
           let hasNewChanges = false;
           if(existing)
           {
-            if(existing.IP_Address !== ip)
+            // Keep the previous IP if the device has gone offline (i.e., the current IP is empty).
+            // The offline flag will indicate that the device is currently offline.
+            if((ip !== "") && (existing.ipAddress !== ip))
             {
-              existing.IP_Address = ip;
+              existing.ipAddress = ip;
               hasNewChanges = true;
+              change += "ip:" + ip + " ";
             }
-            if(existing.Name?.toLowerCase() !== hostname.toLowerCase())
+
+            if(existing.offline !== offline)
             {
-              existing.Name = hostname;
+              existing.offline = offline;
               hasNewChanges = true;
+              change += "offline:" + offline + " ";
             }
-            if(existing.Reserved !== reserved)
+
+            if(existing.name?.toLowerCase() !== hostname.toLowerCase())
             {
-              existing.Reserved = reserved;
+              existing.name = hostname;
               hasNewChanges = true;
+              change += "name:" + hostname + " ";
             }
-            if((comment && (comment != existing.Comment)
+            if(existing.reserved !== reserved)
+            {
+              existing.reserved = reserved;
+              hasNewChanges = true;
+              change += "reserved:" + reserved + " ";
+            }
+            if((comment && (comment != existing.comment)
                         && (comment.toLowerCase() != hostname.toLowerCase())))
             {
-              existing.Comment = comment;
+              existing.comment = comment;
               hasNewChanges = true;
+              change += "comment:" + comment + " ";
             }
             if (hasNewChanges)
             {
-              console.log(`[UPDATE] ${existing.Name} (${mac}) -> IP: ${ip}, Reserved: ${reserved} Comment: ${comment}`);
+              console.log(`[UPDATE] ${existing.name} (${mac}) -> changes: ${change.trim()}`);
               hasChanges = true;
             }
           }
