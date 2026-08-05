@@ -22,24 +22,32 @@ export class NetworkDeviceService
       {
          // Need to dynamically determine application URL and thus the URL for the data dir.
          // Based on Google AI suggestion.
-         const host = window.location.origin;
-         const path = window.location.pathname; // e.g., "/applicationname/index.html" or "/applicationname/home"
+         this.serverhost = window.location.origin;
+      }
+      console.log("NetworkDeviceService: initial serverhost:" + this.serverhost);
+      const path = window.location.pathname; // e.g., "/applicationname/index.html" or "/applicationname/home"
 
-         // Split the path by slashes and filter out empty strings
-         const pathSegments = path.split('/').filter(segment => segment.length > 0);
+      // Split the path by slashes and filter out empty strings
+      const pathSegments = path.split('/').filter(segment => segment.length > 0);
 
-         // When deployed in a sub-directory, the first segment is the app name
-         // e.g., if path is "/applicationname/home", pathSegments[0] is "applicationname"
+
+      // If the foldername for the devices.json file starts with a /, ie. is an
+      // absolute name, then interpret it as meaning absolute from the root of the server.
+      // This lets the data file be stored outside of the app installation directory on the server
+      // which should avoid deleting/overwriting the 'active' file when a new build is installed.
+      if(!(environment.folder.startsWith("/")))
+      {
+         // When app is deployed in a sub-directory, eg. http://hostname/appname, the first segment is the app name
+         // e.g., if path is "/appname/home", pathSegments[0] is "appname"
          let apppath= "/";
          if (pathSegments.length > 0 && !pathSegments[0].includes('.'))
          {
-            apppath = `/${pathSegments[0]}/`;
+            apppath = `/${pathSegments[0]}/`; // apppath starts and ends with '/'
          }
-
-         this.serverhost = host + apppath; // Ends with '/'
-
-         console.log("NetworkDeviceService: serverhost:" + this.serverhost);
+         this.serverhost = this.serverhost + apppath; // Ends with '/'
       }
+      console.log("NetworkDeviceService: final serverhost:" + this.serverhost);
+
 
       this.apiext = environment.api_ext;
       this.apiapp = environment.folder + environment.api_app;
