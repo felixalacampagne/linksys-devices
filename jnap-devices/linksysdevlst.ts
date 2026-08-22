@@ -331,6 +331,7 @@ const jnapDevices = await getConnectedDevices();
           const existing : NetworkDevice | undefined = knownDevices.find(d => d.macAddress === mac);
           const reserved = breserved;
           let hasNewChanges = false;
+
           if(existing)
           {
             // Keep the previous IP if the device has gone offline (i.e., the current IP is empty).
@@ -344,29 +345,29 @@ const jnapDevices = await getConnectedDevices();
 
             if(existing.offline !== offline)
             {
+              change += "offline:" + existing.offline + "->" + offline + " ";
               existing.offline = offline;
               hasNewChanges = true;
-              change += "offline:" + existing.offline + "->" + offline + " ";
             }
 
             if(existing.name?.toLowerCase() !== hostname.toLowerCase())
             {
+              change += "name:" + existing.name + "->" + hostname + " ";
               existing.name = hostname;
               hasNewChanges = true;
-              change += "name:" + existing.name + "->" + hostname + " ";
             }
             if(existing.reserved !== reserved)
             {
+              change += "reserved:" + existing.reserved + "->" + reserved + " ";
               existing.reserved = reserved;
               hasNewChanges = true;
-              change += "reserved:" + existing.reserved + "->" + reserved + " ";
             }
             if((comment && (comment != existing.comment)
                         && (comment.toLowerCase() != hostname.toLowerCase())))
             {
+              change += "comment:'" + existing.comment + "'->'" + comment + "' ";
               existing.comment = comment;
               hasNewChanges = true;
-              change += "comment:'" + existing.comment + "'->'" + comment + "' ";
             }
             if (hasNewChanges)
             {
