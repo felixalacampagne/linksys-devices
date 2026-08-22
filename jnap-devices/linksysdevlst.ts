@@ -307,7 +307,7 @@ const jnapDevices = await getConnectedDevices();
         const ip = device.ipAddress ?? 'unknown';
         const breserved = device.reserved ?? false;
         const hostname = device.name ?? 'Unknown Device';
-        const comment = device.comment ?? '';
+        const comment = device.comment?.trim() ?? '';
         const offline = device.offline ?? false;
         let change : string = "";
         if (!mac) continue;
@@ -339,34 +339,34 @@ const jnapDevices = await getConnectedDevices();
             {
               existing.ipAddress = ip;
               hasNewChanges = true;
-              change += "ip:" + ip + " ";
+              change += "ip:" + existing.ipAddress + "->" + ip + " ";
             }
 
             if(existing.offline !== offline)
             {
               existing.offline = offline;
               hasNewChanges = true;
-              change += "offline:" + offline + " ";
+              change += "offline:" + existing.offline + "->" + offline + " ";
             }
 
             if(existing.name?.toLowerCase() !== hostname.toLowerCase())
             {
               existing.name = hostname;
               hasNewChanges = true;
-              change += "name:" + hostname + " ";
+              change += "name:" + existing.name + "->" + hostname + " ";
             }
             if(existing.reserved !== reserved)
             {
               existing.reserved = reserved;
               hasNewChanges = true;
-              change += "reserved:" + reserved + " ";
+              change += "reserved:" + existing.reserved + "->" + reserved + " ";
             }
             if((comment && (comment != existing.comment)
                         && (comment.toLowerCase() != hostname.toLowerCase())))
             {
               existing.comment = comment;
               hasNewChanges = true;
-              change += "comment:" + comment + " ";
+              change += "comment:'" + existing.comment + "'->'" + comment + "' ";
             }
             if (hasNewChanges)
             {
